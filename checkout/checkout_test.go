@@ -2,6 +2,7 @@ package checkout
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -232,5 +233,59 @@ func Test_Remove_Beyond_Zero(t *testing.T) {
 	}
 	if err := co.Remove("C"); err == nil {
 		t.Error("expected error removing C beyond zero")
+	}
+}
+
+func Test_Pricing_Yaml_Changing(t *testing.T) {
+	// 1) Write initial pricing (no special for A)
+
+	dir := t.TempDir()
+	config := filepath.Join(dir, "pricing.yaml")
+	initial := `
+				items:
+				- sku: "A"
+					unit_price: 50
+				- sku: "B"
+					unit_price: 30
+				`
+	if err := os.WriteFile(config, []byte(initial), 0644); err != nil {
+		t.Fatalf("write initial config: %v", err)
+	}
+
+	// 2) Load checkout and scan 3 A's
+	co, err := NewCheckout(config)
+	if err != nil {
+		t.Fatalf("loading config: %v", err)
+	}
+
+	for range 3 {
+		if err := co.Scan("A"); err != nil {
+			t.Fatalf("scan A: %v", err)
+		}
+	}
+
+	if got := co.GetTotalPrice(); got != 3*50 {
+		t.Errorf("before reload: got %d, want %d", got, 3*50)
+	}
+
+	// 3) Overwrite YAML to add special 3-for-130 on A
+	updated := `
+				items:
+				- sku: "A"
+					unit_price: 50
+					special_price:
+					count: 3
+					price: 130
+				- sku: "B"
+					unit_price: 30
+				`
+
+	if err := os.WriteFile(config, []byte(updated), 0644); err != nil {
+		t.Fatalf("write updated config: %v", err)
+	}
+
+	// 4) The next GetTotalPrice should pick up the special
+	if got := co.GetTotalPrice(); got != 130 {
+		t.Errorf("after reload: got %d, want %d", got, 130)
 	}
 }
