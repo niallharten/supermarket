@@ -1,0 +1,15 @@
+items:
+  - sku: "A"
+    unit_price: 50
+    special_price:
+      count: 3
+      price: 130
+  - sku: "B"
+    unit_price: 30
+    special_price:
+      count: 2
+      price: 45
+  - sku: "C"
+    unit_price: 20
+  - sku: "D"
+    unit_price: 15
