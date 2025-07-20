@@ -1,6 +1,7 @@
 package checkout
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v2"
@@ -48,9 +49,25 @@ func NewCheckout(path string) (ICheckout, error) {
 }
 
 func (c *checkout) Scan(sku string) error {
+	if _, ok := c.rules[sku]; !ok {
+		return fmt.Errorf("unknown SKU %q", sku)
+	}
+	c.scanned[sku]++
 	return nil
 }
 
 func (c *checkout) GetTotalPrice() int {
-	return 0
+	var total int
+	for sku, count := range c.scanned {
+		rule := c.rules[sku]
+
+		// if there's a special deal and we've scanned enough
+		if sp := rule.SpecialPrice; sp != nil && count >= sp.Count {
+			bundles := count / sp.Count
+			total += bundles * sp.Price
+			count -= bundles * sp.Count
+		}
+		total += count * rule.UnitPrice
+	}
+	return total
 }
