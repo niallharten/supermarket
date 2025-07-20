@@ -21,7 +21,7 @@ func printMenu() {
 }
 
 func main() {
-	configPath := flag.String("config", "pricing.yaml", "path to pricing YAML")
+	configPath := flag.String("config", "config/pricing.yaml", "path to pricing YAML")
 	flag.Parse()
 
 	co, err := checkout.NewCheckout(*configPath)
