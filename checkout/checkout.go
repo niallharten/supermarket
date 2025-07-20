@@ -10,6 +10,7 @@ import (
 type ICheckout interface {
 	Scan(sku string) error
 	GetTotalPrice() int
+	Remove(sku string) error
 }
 
 type SpecialPrice struct {
@@ -70,4 +71,15 @@ func (c *checkout) GetTotalPrice() int {
 		total += count * rule.UnitPrice
 	}
 	return total
+}
+
+func (c *checkout) Remove(sku string) error {
+	if _, ok := c.rules[sku]; !ok {
+		return fmt.Errorf("unknown SKU %q", sku)
+	}
+	if c.scanned[sku] == 0 {
+		return fmt.Errorf("no %q in cart to remove", sku)
+	}
+	c.scanned[sku]--
+	return nil
 }

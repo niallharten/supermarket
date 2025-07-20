@@ -192,3 +192,45 @@ func Test_Multiple_Specials(t *testing.T) {
 		})
 	}
 }
+
+func Test_Remove_Unknown_Or_Empty(t *testing.T) {
+	co := mockCheckout(t)
+	if err := co.Remove("X"); err == nil {
+		t.Error("expected error removing unknown SKU")
+	}
+	if err := co.Remove("A"); err == nil {
+		t.Error("expected error removing when none scanned")
+	}
+}
+
+func Test_Remove_And_Recalculate(t *testing.T) {
+	co := mockCheckout(t)
+	for _, sku := range []string{"A", "A", "A", "B"} {
+		if err := co.Scan(sku); err != nil {
+			t.Fatalf("scan %q: %v", sku, err)
+		}
+	}
+	if total := co.GetTotalPrice(); total != 160 {
+		t.Fatalf("before remove: got %d, want %d", total, 160)
+	}
+
+	if err := co.Remove("A"); err != nil {
+		t.Fatalf("remove A: %v", err)
+	}
+	if total := co.GetTotalPrice(); total != 130 {
+		t.Errorf("after remove: got %d, want %d", total, 130)
+	}
+}
+
+func Test_Remove_Beyond_Zero(t *testing.T) {
+	co := mockCheckout(t)
+	if err := co.Scan("C"); err != nil {
+		t.Fatalf("scan C: %v", err)
+	}
+	if err := co.Remove("C"); err != nil {
+		t.Fatalf("remove C: %v", err)
+	}
+	if err := co.Remove("C"); err == nil {
+		t.Error("expected error removing C beyond zero")
+	}
+}

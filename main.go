@@ -54,6 +54,15 @@ func main() {
 				fmt.Println("error:", err)
 			}
 
+		case "remove":
+			if len(args) != 1 {
+				fmt.Println("Command use: remove <SKU>")
+				continue
+			}
+			if err := co.Remove(args[0]); err != nil {
+				fmt.Println("error:", err)
+			}
+
 		case "total":
 			t := co.GetTotalPrice()
 			fmt.Printf("Total: %d\n", t)
